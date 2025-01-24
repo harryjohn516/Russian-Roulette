@@ -1,0 +1,23 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Only allow admins collection to be read by authenticated users
+    match /admins/{userId} {
+      allow read: if request.auth != null;
+      allow write: if false; // No direct writes allowed
+    }
+    
+    // Game data can be read by authenticated users
+    match /games/{gameId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null 
+        && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+    
+    // User profiles
+    match /users/{userId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+  }
+}
